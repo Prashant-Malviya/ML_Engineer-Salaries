@@ -1,13 +1,10 @@
-// src/App.jsx
 import React, { useEffect, useState } from 'react';
 import 'antd/dist/reset.css';
 import './App.css';
-import { Table } from 'antd';
 import axios from 'axios';
 import SalaryTable from './components/SalaryTable';
 import LineGraph from './components/LineGraph';
-
-const { Column } = Table;
+import { Table } from 'antd';
 
 const App = () => {
   const [data, setData] = useState([]);
@@ -31,27 +28,33 @@ const App = () => {
 
   const handleRowClick = (record) => {
     setSelectedYear(record.work_year);
-    axios.get(`http://localhost:5000/api/jobs/${record.work_year}`)
-      .then(response => {
-        setJobDetails(response.data);
-      })
-      .catch(error => {
-        console.error('There was an error fetching the job details!', error);
-      });
+    const filteredData = data.filter(item => item.work_year === record.work_year);
+
+    const jobCounts = filteredData.reduce((acc, item) => {
+      acc[item.job_title] = (acc[item.job_title] || 0) + 1;
+      return acc;
+    }, {});
+
+    const aggregatedData = Object.entries(jobCounts).map(([title, count]) => ({
+      job_title: title,
+      count,
+    }));
+
+    setJobDetails(aggregatedData);
   };
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>ML Engineer Salaries</h1>
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6 text-center">ML Engineer Salaries</h1>
       <SalaryTable data={data} onRowClick={handleRowClick} />
-      <h2>Job Trends</h2>
+      <h2 className="text-2xl font-semibold mt-8 mb-4 text-center">Job Trends</h2>
       <LineGraph data={data} />
       {selectedYear && (
         <>
-          <h2>Job Details for {selectedYear}</h2>
-          <Table dataSource={jobDetails} rowKey="job_title">
-            <Column title="Job Title" dataIndex="job_title" key="job_title" />
-            <Column title="Count" dataIndex="count" key="count" />
+          <h2 className="text-2xl font-semibold mt-8 mb-4 text-center">Job Details for {selectedYear}</h2>
+          <Table dataSource={jobDetails} rowKey="job_title" className="shadow-md rounded-lg overflow-hidden">
+            <Table.Column title="Job Title" dataIndex="job_title" key="job_title" />
+            <Table.Column title="Total Jobs" dataIndex="count" key="count" />
           </Table>
         </>
       )}

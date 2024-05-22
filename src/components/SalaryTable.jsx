@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Table } from 'antd';
 import axios from 'axios';
+import classNames from 'classnames'; // Import classNames for conditional class application
 
 const SalaryTable = ({ onRowClick }) => {
   const [data, setData] = useState([]);
+  const [selectedRowKey, setSelectedRowKey] = useState(null); // State to track the selected row
 
   useEffect(() => {
     axios.get('http://localhost:5000/api/salaries')
       .then(response => {
-        console.log('API response:', response.data); // Log the response data
-
-        // Ensure the data is in the correct format
         const formattedData = response.data.map((item, index) => ({
           key: `${item.work_year}-${index}`, // Generate a unique key
           work_year: Number(item.work_year),
@@ -25,9 +24,10 @@ const SalaryTable = ({ onRowClick }) => {
       });
   }, []);
 
-  useEffect(() => {
-    console.log('Data state updated:', data); // Log the updated data state
-  }, [data]);
+  const handleRowClick = (record) => {
+    setSelectedRowKey(record.key); // Set the selected row key
+    onRowClick(record); // Call the onRowClick handler passed as prop
+  };
 
   const columns = [
     {
@@ -50,16 +50,16 @@ const SalaryTable = ({ onRowClick }) => {
     },
   ];
 
-  console.log('Table data:', data); // Log data before rendering
-
   return (
     <Table
       columns={columns}
       dataSource={data}
       onRow={(record) => ({
-        onClick: () => onRowClick(record),
+        onClick: () => handleRowClick(record),
+        className: classNames('cursor-pointer', { 'bg-gray-100': record.key === selectedRowKey }), 
       })}
-      pagination={{ pageSize: 10 }} // Keep pagination enabled
+      pagination={{ pageSize: 10 }}
+      className="shadow-md rounded-lg overflow-hidden"
     />
   );
 };
